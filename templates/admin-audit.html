@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}Audit logs — FAAN Electricity{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}<main class="content" style="max-width:1200px;margin:0 auto"><div class="page-head"><div><div class="kicker">Administration</div><h1>Audit logs</h1><p>Review approvals, payment events, fulfilment, and sensitive actions.</p></div><a class="btn btn-secondary" href="{% url 'staff-dashboard' %}">Dashboard</a></div><div class="card"><div class="table-wrap"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Metadata</th></tr></thead><tbody>{% for log in audit_logs %}<tr><td>{{ log.created_at|date:"d M Y, H:i:s" }}</td><td>{{ log.actor }}</td><td><b>{{ log.action }}</b></td><td>{{ log.target }}</td><td>{{ log.metadata }}</td></tr>{% empty %}<tr><td colspan="5">No audit events recorded.</td></tr>{% endfor %}</tbody></table></div></div></main>{% endblock %}

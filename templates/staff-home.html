@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}FAAN staff dashboard{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}
+<main class="content" style="max-width:1200px;margin:0 auto">
+  <div class="page-head">
+    <div><div class="kicker">FAAN Metering Unit</div><h1>Staff operations dashboard</h1><p>Approve tenants, fulfil paid recharges, and resolve exceptions.</p></div>
+    <a class="btn btn-secondary" href="/admin/">Django admin</a>
+  </div>
+  <div class="grid grid-4">
+    <a class="card stat" href="{% url 'staff-approval-queue' %}"><div><div class="stat-label">Pending approvals</div><div class="stat-value">{{ pending_approvals }}</div></div><div class="stat-icon">◎</div></a>
+    <a class="card stat" href="{% url 'staff-fulfilment-queue' %}"><div><div class="stat-label">Awaiting fulfilment</div><div class="stat-value">{{ awaiting_fulfilment }}</div></div><div class="stat-icon">↻</div></a>
+    <a class="card stat" href="{% url 'staff-exceptions-queue' %}"><div><div class="stat-label">Exceptions</div><div class="stat-value">{{ exceptions }}</div></div><div class="stat-icon">!</div></a>
+    <div class="card stat"><div><div class="stat-label">Approved tenants</div><div class="stat-value">{{ approved_tenants }}</div></div><div class="stat-icon">✓</div></div>
+  </div>
+  <div class="grid grid-2" style="margin-top:18px">
+    <div class="card"><div class="page-head"><h2>Approval queue</h2><a href="{% url 'staff-approval-queue' %}" class="btn btn-secondary">Open queue</a></div>
+      {% for tenant in recent_approvals %}<div class="list-row"><div><b>{{ tenant.user.first_name|default:tenant.registered_name }}</b><div class="help">{{ tenant.meter_number }} · {{ tenant.phone_number }}</div></div><span class="badge badge-warning">Pending</span></div>{% empty %}<p class="help">No pending tenant approvals.</p>{% endfor %}
+    </div>
+    <div class="card"><div class="page-head"><h2>Fulfilment queue</h2><a href="{% url 'staff-fulfilment-queue' %}" class="btn btn-secondary">Open queue</a></div>
+      {% for item in recent_fulfilment %}<div class="list-row"><div><b>{{ item.payment_reference }}</b><div class="help">{{ item.tenant.registered_name }} · ₦{{ item.amount }}</div></div><span class="badge badge-warning">Awaiting token</span></div>{% empty %}<p class="help">No paid requests are waiting.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="actions" style="margin-top:18px"><a class="btn btn-secondary" href="{% url 'staff-exceptions-queue' %}">Exceptions</a><a class="btn btn-secondary" href="{% url 'staff-reports' %}">Reports</a><a class="btn btn-secondary" href="{% url 'staff-management' %}">Staff management</a><a class="btn btn-secondary" href="{% url 'staff-audit' %}">Audit logs</a></div>
+</main>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Exceptions — FAAN Electricity{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}
+<main class="content" style="max-width:1200px;margin:0 auto">
+<div class="page-head"><div><div class="kicker">Manual review</div><h1>Exceptions queue</h1><p>Investigate failed or expired payments and delivery problems.</p></div><a class="btn btn-secondary" href="{% url 'staff-dashboard' %}">Dashboard</a></div>
+<div class="card"><h2>Payment exceptions</h2><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Customer</th><th>Amount</th><th>Status</th><th>Updated</th></tr></thead><tbody>{% for item in payment_exceptions %}<tr><td>{{ item.payment_reference }}</td><td>{{ item.tenant.registered_name }}<div class="help">{{ item.tenant.meter_number }}</div></td><td>₦{{ item.amount }}</td><td><span class="badge badge-danger">{{ item.get_payment_status_display }}</span></td><td>{{ item.updated_at|date:"d M Y, H:i" }}</td></tr>{% empty %}<tr><td colspan="5">No payment exceptions.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card" style="margin-top:18px"><h2>Token delivery failures</h2><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Customer</th><th>Token status</th><th>Updated</th></tr></thead><tbody>{% for item in delivery_failures %}<tr><td>{{ item.payment_reference }}</td><td>{{ item.tenant.registered_name }}<div class="help">{{ item.tenant.phone_number }}</div></td><td><span class="badge badge-danger">{{ item.get_token_status_display }}</span></td><td>{{ item.updated_at|date:"d M Y, H:i" }}</td></tr>{% empty %}<tr><td colspan="4">No token delivery failures.</td></tr>{% endfor %}</tbody></table></div></div>
+</main>
+{% endblock %}

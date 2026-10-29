@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Staff dashboard — FAAN Electricity{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}
+<main class="content" style="max-width:1100px;margin:0 auto">
+  <div class="page-head">
+    <div>
+      <div class="kicker">FAAN Metering Unit</div>
+      <h1>Tenant approval queue</h1>
+      <p>Review phone-verified customer accounts before enabling electricity purchases.</p>
+    </div>
+    <a href="{% url 'staff-dashboard' %}" class="btn btn-secondary">Dashboard</a>
+  </div>
+  <div class="card">
+    <div class="list">
+  {% if pending_tenants %}
+    {% for tenant in pending_tenants %}
+      <article class="list-row" style="align-items:flex-start;gap:20px">
+        <div style="flex:1">
+          <a href="{% url 'staff-approval-detail' tenant.id %}"><b>{{ tenant.user.first_name|default:tenant.registered_name }}</b></a>
+          <div class="help">{{ tenant.user.email }} · {{ tenant.phone_number }}</div>
+          <div class="help">Meter {{ tenant.meter_number }} · FAAN name: {{ tenant.registered_name }}</div>
+          <div class="help">Signed up {{ tenant.created_at|date:"d M Y, H:i" }} · Phone verified {{ tenant.phone_verified_at|date:"d M Y, H:i" }}</div>
+        </div>
+        <div class="actions">
+          <form method="post" action="{% url 'staff-approve-tenant' tenant.id %}">
+            {% csrf_token %}<button class="btn btn-primary" type="submit">Approve account</button>
+          </form>
+          <form method="post" action="{% url 'staff-reject-tenant' tenant.id %}">
+            {% csrf_token %}
+            <input name="reason" required placeholder="Rejection reason">
+            <button class="btn btn-secondary" type="submit">Reject</button>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">No phone-verified sign-ups are waiting for approval.</div>
+  {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

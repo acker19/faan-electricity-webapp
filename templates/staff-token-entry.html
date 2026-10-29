@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Enter token — FAAN Electricity{% endblock %}
+{% block page_script %}<script>window.FAAN_PAGE="staff-token-entry";</script>{% endblock %}
+{% block content %}
+<main class="page-shell">
+  <h1>Enter recharge token</h1>
+  <p>{{ recharge.tenant.registered_name }} · {{ recharge.tenant.meter_number }} · ₦{{ recharge.amount }}</p>
+  <form method="post">
+    {% csrf_token %}
+    <label for="token">Token</label>
+    <input id="token" name="token" required maxlength="128" autocomplete="off">
+    <button type="submit">Save and deliver</button>
+  </form>
+</main>
+{% endblock %}

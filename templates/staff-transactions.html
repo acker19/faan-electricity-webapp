@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Fulfilment queue — FAAN Electricity{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}
+<main class="content" style="max-width:1200px;margin:0 auto">
+<div class="page-head"><div><div class="kicker">Paid requests</div><h1>Token fulfilment queue</h1><p>Generate the token in the authorized FAAN vending system, then enter it securely.</p></div><a class="btn btn-secondary" href="{% url 'staff-dashboard' %}">Dashboard</a></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Customer</th><th>Meter</th><th>Amount</th><th>Paid</th><th>Action</th></tr></thead><tbody>
+{% for recharge in recharge_requests %}<tr><td><b>{{ recharge.payment_reference }}</b></td><td>{{ recharge.tenant.registered_name }}<div class="help">{{ recharge.tenant.phone_number }}</div></td><td>{{ recharge.tenant.meter_number }}</td><td>₦{{ recharge.amount }}</td><td>{{ recharge.paid_at|date:"d M Y, H:i" }}</td><td><a class="btn btn-primary" href="{% url 'staff-transaction-detail' recharge.id %}">Open</a></td></tr>{% empty %}<tr><td colspan="6">No paid requests are awaiting token fulfilment.</td></tr>{% endfor %}
+</tbody></table></div></div></main>
+{% endblock %}

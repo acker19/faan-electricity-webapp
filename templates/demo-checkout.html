@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Demo payment checkout — FAAN Electricity{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}
+<main class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand"><div class="brand-mark">F</div> FAAN Electricity</div>
+    <div class="kicker">Local payment simulation</div>
+    <h1>Complete demo payment</h1>
+    <p class="help">This is a local checkout because the payment provider is configured as mock. It does not charge real money.</p>
+    <div class="card" style="margin:18px 0">
+      <div class="list">
+        <div class="list-row"><span>Reference</span><b>{{ recharge.payment_reference }}</b></div>
+        <div class="list-row"><span>Meter</span><b>{{ recharge.tenant.meter_number }}</b></div>
+        <div class="list-row"><span>Amount</span><b>₦{{ recharge.amount }}</b></div>
+        <div class="list-row"><span>Status</span><b>{{ recharge.get_payment_status_display }}</b></div>
+      </div>
+    </div>
+    {% if recharge.payment_status == "awaiting_payment" %}
+      <form method="post">{% csrf_token %}<button class="btn btn-primary btn-block">Complete demo payment</button></form>
+    {% else %}
+      <div class="alert alert-success">This payment has already been completed.</div>
+    {% endif %}
+    <a class="btn btn-secondary btn-block" style="margin-top:10px" href="/">Return to app</a>
+  </div>
+</main>
+{% endblock %}

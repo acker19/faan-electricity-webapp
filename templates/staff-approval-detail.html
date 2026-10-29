@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Review tenant — FAAN Electricity{% endblock %}
+{% block frontend_script %}{% endblock %}
+{% block content %}
+<main class="content" style="max-width:1000px;margin:0 auto">
+<div class="page-head"><div><div class="kicker">Tenant review</div><h1>{{ tenant.user.first_name|default:tenant.registered_name }}</h1><p>Cross-check the customer details against FAAN records before approving.</p></div><a class="btn btn-secondary" href="{% url 'staff-approval-queue' %}">Back to queue</a></div>
+<div class="grid grid-2"><div class="card"><h2>Identity and meter</h2><div class="list"><div class="list-row"><span>Account name</span><b>{{ tenant.user.first_name|default:"Not supplied" }}</b></div><div class="list-row"><span>Email</span><b>{{ tenant.user.email }}</b></div><div class="list-row"><span>Phone</span><b>{{ tenant.phone_number }}</b></div><div class="list-row"><span>Meter</span><b>{{ tenant.meter_number }}</b></div><div class="list-row"><span>FAAN registered name</span><b>{{ tenant.registered_name }}</b></div><div class="list-row"><span>Phone verified</span><b>{{ tenant.phone_verified_at|date:"d M Y, H:i" }}</b></div></div></div>
+<div class="card"><h2>Decision</h2><form method="post" action="{% url 'staff-approve-tenant' tenant.id %}">{% csrf_token %}<button class="btn btn-primary btn-block" type="submit">Approve account</button></form><hr><form method="post" action="{% url 'staff-reject-tenant' tenant.id %}">{% csrf_token %}<div class="field"><label>Rejection reason</label><input name="reason" required maxlength="255" placeholder="Explain the mismatch or issue"></div><button class="btn btn-secondary btn-block" type="submit">Reject account</button></form></div></div>
+<div class="card" style="margin-top:18px"><h2>Audit history</h2>{% for entry in audit_history %}<div class="list-row"><span>{{ entry.created_at|date:"d M Y, H:i" }} · {{ entry.actor }}</span><b>{{ entry.action }}</b></div>{% empty %}<p class="help">No previous audit events.</p>{% endfor %}</div>
+</main>
+{% endblock %}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="FAAN Electricity Vending Platform">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<title>{% block title %}FAAN Electricity{% endblock %}</title>
+<link rel="stylesheet" href="/static/css/app.css">
+</head><body>
+{% if request.user.is_authenticated and request.user.is_staff %}
+<nav style="background:#10261d;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+  <strong style="color:#fff;margin-right:10px">FAAN Staff</strong>
+  <a href="{% url 'staff-dashboard' %}" style="color:#bde5d0">Dashboard</a>
+  <a href="{% url 'staff-approval-queue' %}" style="color:#bde5d0">Approvals</a>
+  <a href="{% url 'staff-fulfilment-queue' %}" style="color:#bde5d0">Fulfilment</a>
+  <a href="{% url 'staff-exceptions-queue' %}" style="color:#bde5d0">Exceptions</a>
+  <a href="{% url 'staff-reports' %}" style="color:#bde5d0">Reports</a>
+  <a href="{% url 'staff-management' %}" style="color:#bde5d0">Staff management</a>
+  <a href="{% url 'staff-audit' %}" style="color:#bde5d0">Audit logs</a>
+  <a href="/admin/" style="color:#bde5d0">Django admin</a>
+</nav>
+{% endif %}
+{% block content %}{% endblock %}
+<div id="app-shell"></div>
+{% block frontend_script %}<script src="/static/js/app.js" defer></script>{% endblock %}
+{% block page_script %}{% endblock %}
+</body></html>
