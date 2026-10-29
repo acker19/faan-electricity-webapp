@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,24 +28,41 @@ env = AutoConfig(search_path=BASE_DIR)
 def env_bool(name, default=False):
     return env(name, default=str(default)).strip().lower() in {"1", "true", "yes", "on"}
 
+IS_VERCEL = env("VERCEL", default="").strip().lower() in {"1", "true", "yes", "on"}
+IS_VERCEL = IS_VERCEL or bool(env("VERCEL_ENV", default="").strip())
 
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-only-change-me")
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-only-change-me").strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool("DJANGO_DEBUG", True)
-if not DEBUG and SECRET_KEY == "dev-only-change-me":
+DEBUG = env_bool("DJANGO_DEBUG", not IS_VERCEL)
+if not DEBUG and (not SECRET_KEY or SECRET_KEY == "dev-only-change-me"):
     raise RuntimeError("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false.")
 
-ALLOWED_HOSTS = env(
-    "DJANGO_ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,10.133.235.167",
-).split(",")
-ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+VERCEL_URLS = [
+    value.strip().removeprefix("https://").removeprefix("http://").rstrip("/")
+    for value in (
+        env("VERCEL_URL", default=""),
+        env("VERCEL_PROJECT_PRODUCTION_URL", default=""),
+    )
+    if value.strip()
+]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in env(
+        "DJANGO_ALLOWED_HOSTS",
+        default="localhost,127.0.0.1",
+    ).split(",")
+    if host.strip()
+]
+ALLOWED_HOSTS.extend(host for host in VERCEL_URLS if host not in ALLOWED_HOSTS)
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in env("DJANGO_CSRF_TRUSTED_ORIGINS", default="").split(",")
     if origin.strip()
 ]
+CSRF_TRUSTED_ORIGINS.extend(
+    f"https://{host}" for host in VERCEL_URLS if f"https://{host}" not in CSRF_TRUSTED_ORIGINS
+)
 
 
 # Application definition
@@ -108,12 +126,45 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = (
+    env("DATABASE_URL", default="")
+    or env("POSTGRES_URL_NON_POOLING", default="")
+    or env("POSTGRES_URL", default="")
+).strip()
+if DATABASE_URL:
+    parsed_database_url = urlparse(DATABASE_URL)
+    if parsed_database_url.scheme not in {"postgres", "postgresql"}:
+        raise RuntimeError("DATABASE_URL must be a PostgreSQL connection URL.")
+    database_options = {
+        key: values[0]
+        for key, values in parse_qs(parsed_database_url.query).items()
+        if key == "sslmode" and values
     }
-}
+    if not DEBUG:
+        database_options.setdefault("sslmode", "require")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": unquote(parsed_database_url.path.lstrip("/")),
+            "USER": unquote(parsed_database_url.username or ""),
+            "PASSWORD": unquote(parsed_database_url.password or ""),
+            "HOST": parsed_database_url.hostname or "",
+            "PORT": parsed_database_url.port or "",
+            "OPTIONS": database_options,
+            "CONN_MAX_AGE": 0 if IS_VERCEL else int(env("DB_CONN_MAX_AGE", default="60")),
+        }
+    }
+elif DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    raise RuntimeError(
+        "DATABASE_URL (or POSTGRES_URL) must point to a persistent PostgreSQL database in production."
+    )
 
 REDIS_URL = env("REDIS_URL", default="").strip()
 if REDIS_URL:
@@ -123,8 +174,6 @@ if REDIS_URL:
             "LOCATION": REDIS_URL,
         }
     }
-elif not DEBUG:
-    raise RuntimeError("REDIS_URL must be set when DJANGO_DEBUG is false.")
 
 
 # Password validation
@@ -188,6 +237,7 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
