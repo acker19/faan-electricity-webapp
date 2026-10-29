@@ -37,13 +37,6 @@ used only for local debug development; Vercel's filesystem is not persistent.
 Redis is optional. Also configure the real OTP, SMS, and payment provider
 variables below before deploying to production.
 
-Create and link a persistent PostgreSQL database (for example, through a Vercel
-storage integration) and ensure its `DATABASE_URL` or `POSTGRES_URL` is
-available to both the build and runtime. Run `python manage.py migrate` against
-that database before signing in. Django intentionally refuses to use SQLite on
-Vercel because user accounts and sessions would not persist between function
-invocations.
-
 **Customer Verification (Twilio Verify) — SMS and Email OTP:**
 ```env
 OTP_PROVIDER=twilio_verify
