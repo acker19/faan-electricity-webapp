@@ -8,7 +8,6 @@ python-decouple==3.8
 cryptography==41.0.7
 twilio==8.10.0
 django-axes==6.1.1
-paystack-django==0.3.2
 Pillow==10.0.1
 gunicorn==21.2.0
 whitenoise==6.6.0
