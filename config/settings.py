@@ -229,8 +229,6 @@ if not DEBUG:
         )
 PAYMENT_PROVIDER = env("PAYMENT_PROVIDER", default="mock")
 PAYSTACK_SECRET_KEY = env("PAYSTACK_SECRET_KEY", default="").strip()
-if PAYMENT_PROVIDER == "paystack" and not PAYSTACK_SECRET_KEY:
-    raise RuntimeError("PAYSTACK_SECRET_KEY is required when PAYMENT_PROVIDER=paystack.")
 if PAYMENT_PROVIDER not in {"mock", "paystack"}:
     raise RuntimeError(f"Unsupported PAYMENT_PROVIDER={PAYMENT_PROVIDER!r}.")
 if not DEBUG and PAYMENT_PROVIDER == "mock":

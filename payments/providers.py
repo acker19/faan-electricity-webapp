@@ -69,6 +69,10 @@ def get_payment_provider():
     if settings.PAYMENT_PROVIDER == "mock":
         return MockPaymentProvider()
     if settings.PAYMENT_PROVIDER == "paystack":
+        if not settings.PAYSTACK_SECRET_KEY:
+            raise RuntimeError(
+                "PAYSTACK_SECRET_KEY is required when PAYMENT_PROVIDER=paystack."
+            )
         return PaystackProvider(settings.PAYSTACK_SECRET_KEY)
     raise RuntimeError(
         f"Unsupported PAYMENT_PROVIDER={settings.PAYMENT_PROVIDER!r}."

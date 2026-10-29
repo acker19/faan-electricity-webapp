@@ -2,9 +2,9 @@ import json
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from .providers import PaystackProvider
+from .providers import PaystackProvider, get_payment_provider
 
 
 class PaystackProviderTests(TestCase):
@@ -64,3 +64,13 @@ class PaystackProviderTests(TestCase):
                     provider.verify("FAAN-reference", Decimal("500.00")),
                     transaction is valid_transaction,
                 )
+
+
+class PaymentProviderConfigurationTests(TestCase):
+    @override_settings(PAYMENT_PROVIDER="paystack", PAYSTACK_SECRET_KEY="")
+    def test_missing_paystack_key_fails_when_provider_is_requested(self):
+        with self.assertRaisesMessage(
+            RuntimeError,
+            "PAYSTACK_SECRET_KEY is required when PAYMENT_PROVIDER=paystack.",
+        ):
+            get_payment_provider()
