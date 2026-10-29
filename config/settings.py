@@ -153,17 +153,20 @@ if DATABASE_URL:
             "CONN_MAX_AGE": 0 if IS_VERCEL else int(env("DB_CONN_MAX_AGE", default="60")),
         }
     }
-elif DEBUG:
+elif IS_VERCEL:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": "/tmp/faan-electricity.sqlite3",
+        }
+    }
+else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-else:
-    raise RuntimeError(
-        "DATABASE_URL (or POSTGRES_URL) must point to a persistent PostgreSQL database in production."
-    )
 
 REDIS_URL = env("REDIS_URL", default="").strip()
 if REDIS_URL:

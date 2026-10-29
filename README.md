@@ -30,12 +30,14 @@ REDIS_URL=<your-redis-connection-string>
 ```
 
 For Vercel, Django defaults to production mode automatically. Configure
-`DJANGO_SECRET_KEY`, `DATABASE_URL` (a persistent PostgreSQL URL), and
-`DJANGO_ALLOWED_HOSTS` in the Vercel project settings. Vercel's deployment URL
-is added to the allowed hosts and CSRF trusted origins automatically. SQLite is
-used only for local debug development; Vercel's filesystem is not persistent.
-Redis is optional. Also configure the real OTP, SMS, and payment provider
-variables below before deploying to production.
+`DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS` in the Vercel project settings.
+Vercel's deployment URL is added to the allowed hosts and CSRF trusted origins
+automatically. If no PostgreSQL `DATABASE_URL` or `POSTGRES_URL` is configured,
+Vercel uses a temporary SQLite database under `/tmp`. Vercel's filesystem is
+not persistent, so this fallback is only suitable for a disposable demo; user
+accounts, sessions, and payments will not be reliable across function
+invocations. Redis is optional. Also configure the real OTP, SMS, and payment
+provider variables below before deploying to production.
 
 **Customer Verification (Twilio Verify) — SMS and Email OTP:**
 ```env
