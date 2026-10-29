@@ -33,8 +33,8 @@ IS_VERCEL = IS_VERCEL or bool(env("VERCEL_ENV", default="").strip())
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-only-change-me").strip()
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool("DJANGO_DEBUG", not IS_VERCEL)
+# Vercel deployments must never use Django debug mode or SQLite's local filesystem.
+DEBUG = False if IS_VERCEL else env_bool("DJANGO_DEBUG", True)
 if not DEBUG and (not SECRET_KEY or SECRET_KEY == "dev-only-change-me"):
     raise RuntimeError("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false.")
 
