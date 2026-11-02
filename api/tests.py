@@ -8,6 +8,7 @@ from rest_framework.test import APIClient, APIRequestFactory
 from django.utils import timezone
 
 from notifications.providers import NotificationDeliveryError
+from payments.providers import PaymentProviderError
 from tenants.models import Tenant
 from recharge.models import RechargeRequest
 from .views import TenantRegisterView
@@ -254,6 +255,27 @@ class RechargePaymentInitializationTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         get_provider.assert_not_called()
+
+    @patch("api.views.get_payment_provider")
+    def test_payment_provider_rejection_returns_gateway_error_without_creating_recharge(
+        self, get_provider
+    ):
+        get_provider.return_value.initialize.side_effect = PaymentProviderError(
+            "Payment provider rejected the request (HTTP 403)."
+        )
+
+        response = self.client.post(
+            "/api/v1/recharge/",
+            {"amount": "500.00"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(
+            response.data["detail"],
+            "Payment provider rejected the request (HTTP 403).",
+        )
+        self.assertFalse(RechargeRequest.objects.filter(tenant=self.tenant).exists())
 
     @patch("api.views.valid_webhook_signature", return_value=True)
     @patch("api.views.get_payment_provider")

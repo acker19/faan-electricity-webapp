@@ -1,10 +1,12 @@
 import json
 from decimal import Decimal
+from io import BytesIO
+from urllib.error import HTTPError
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
 
-from .providers import PaystackProvider, get_payment_provider
+from .providers import PaymentProviderError, PaystackProvider, get_payment_provider
 
 
 class PaystackProviderTests(TestCase):
@@ -39,6 +41,24 @@ class PaystackProviderTests(TestCase):
                 "reference": "FAAN-reference",
             },
         )
+
+    @patch("payments.providers.urlopen")
+    def test_http_rejection_is_reported_as_payment_provider_error(self, mock_urlopen):
+        mock_urlopen.side_effect = HTTPError(
+            "https://api.paystack.co/transaction/initialize",
+            403,
+            "Forbidden",
+            hdrs=None,
+            fp=BytesIO(b'{"message":"Forbidden"}'),
+        )
+
+        with self.assertRaisesMessage(
+            PaymentProviderError,
+            "Payment provider rejected the request (HTTP 403).",
+        ):
+            PaystackProvider("sk_test_example").initialize(
+                "FAAN-reference", Decimal("500.00"), "payer@example.com"
+            )
 
     @patch("payments.providers.urlopen")
     def test_verify_requires_matching_success_reference_amount_and_currency(

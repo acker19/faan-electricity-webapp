@@ -2,7 +2,12 @@ import hashlib
 import hmac
 import json
 from decimal import Decimal
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+
+
+class PaymentProviderError(Exception):
+    """Raised when a payment provider rejects or cannot process a request."""
 
 
 class PaymentProvider:
@@ -40,10 +45,15 @@ class PaystackProvider(PaymentProvider):
             },
             method="POST" if payload is not None else "GET",
         )
-        with urlopen(request, timeout=10) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        try:
+            with urlopen(request, timeout=10) as response:
+                result = json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            raise PaymentProviderError(
+                f"Payment provider rejected the request (HTTP {exc.code})."
+            ) from exc
         if not result.get("status"):
-            raise RuntimeError("Paystack request failed.")
+            raise PaymentProviderError("Payment provider rejected the request.")
         return result["data"]
 
     def initialize(self, reference, amount, email):

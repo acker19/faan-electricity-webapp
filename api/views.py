@@ -24,7 +24,7 @@ from .serializers import (
 from tenants.models import Tenant, PhoneOTP
 from recharge.models import RechargeRequest
 from payments.models import WebhookEvent
-from payments.providers import get_payment_provider, valid_webhook_signature
+from payments.providers import PaymentProviderError, get_payment_provider, valid_webhook_signature
 from audit.services import record_audit
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
@@ -266,16 +266,22 @@ class RechargeCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with transaction.atomic():
-            recharge = RechargeRequest.objects.create(
-                tenant_id=serializer.validated_data["tenant_id"],
-                amount=serializer.validated_data["amount"],
-                payment_reference=f"FAAN-{uuid.uuid4().hex[:24].upper()}",
-            )
-            authorization_url = get_payment_provider().initialize(
-                recharge.payment_reference,
-                recharge.amount,
-                email,
+        try:
+            with transaction.atomic():
+                recharge = RechargeRequest.objects.create(
+                    tenant_id=serializer.validated_data["tenant_id"],
+                    amount=serializer.validated_data["amount"],
+                    payment_reference=f"FAAN-{uuid.uuid4().hex[:24].upper()}",
+                )
+                authorization_url = get_payment_provider().initialize(
+                    recharge.payment_reference,
+                    recharge.amount,
+                    email,
+                )
+        except PaymentProviderError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_502_BAD_GATEWAY,
             )
 
         return Response(
