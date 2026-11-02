@@ -4,9 +4,10 @@ const page=window.FAAN_PAGE||"dashboard";
 const API="/api/v1";
 const session=()=>JSON.parse(localStorage.getItem("faan_session")||"null");
 const setSession=(value)=>value?localStorage.setItem("faan_session",JSON.stringify(value)):localStorage.removeItem("faan_session");
+const csrfToken=()=>document.cookie.split(";").map(cookie=>cookie.trim()).find(cookie=>cookie.startsWith("csrftoken="))?.slice("csrftoken=".length)||document.querySelector('meta[name="csrf-token"]')?.content;
 async function api(path, options={}) {
-  const csrfToken=document.querySelector('meta[name="csrf-token"]')?.content;
-  const response=await fetch(API+path,{credentials:"same-origin",headers:{"Content-Type":"application/json",...(csrfToken?{"X-CSRFToken":csrfToken}:{}),...(options.headers||{})},...options});
+  const token=csrfToken();
+  const response=await fetch(API+path,{credentials:"same-origin",headers:{"Content-Type":"application/json",...(token?{"X-CSRFToken":token}:{}),...(options.headers||{})},...options});
   const body=await response.json().catch(()=>null);
   if(!response.ok) throw new Error(body?.detail||Object.values(body||{}).flat().join(" ")||"Request failed.");
   return body;
