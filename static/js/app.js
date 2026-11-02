@@ -8,8 +8,15 @@ const csrfToken=()=>document.cookie.split(";").map(cookie=>cookie.trim()).find(c
 async function api(path, options={}) {
   const token=csrfToken();
   const response=await fetch(API+path,{credentials:"same-origin",headers:{"Content-Type":"application/json",...(token?{"X-CSRFToken":token}:{}),...(options.headers||{})},...options});
-  const body=await response.json().catch(()=>null);
-  if(!response.ok) throw new Error(body?.detail||Object.values(body||{}).flat().join(" ")||"Request failed.");
+  const contentType=response.headers.get("content-type")||"";
+  const body=contentType.includes("application/json")?await response.json().catch(()=>null):null;
+  if(!response.ok) {
+    const detail=body?.detail||Object.values(body||{}).flat().join(" ");
+    if(detail) throw new Error(detail);
+    if(response.status===403) throw new Error("Request blocked (HTTP 403). Refresh the page and sign in again; if this continues, the server rejected the CSRF token.");
+    throw new Error(`Request failed (HTTP ${response.status}${contentType?`, ${contentType.split(";")[0]}`:""}).`);
+  }
+  if(body===null) throw new Error("The server returned an invalid response. Check the local server log for details.");
   return body;
 }
 const customerRoutes=new Set(["dashboard","meters","recharge","transactions","transaction-detail","token","receipt","profile"]);
